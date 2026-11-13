@@ -499,7 +499,7 @@ function startMusic(){
   } catch(_) {}
 }
 /* música do filme pelo player do YouTube (o player fica visível, como o YouTube exige); sem YouTube, toca a caixinha */
-const YT_VIDEO = "84FhlPuXkPw";
+const YT_VIDEO = ""; /* player do YouTube desligado: o Adriano quer só a música, sem imagem */
 let ytPlayer = null, ytReady = false, ytFail = false;
 window.onYouTubeIframeAPIReady = () => {
   document.getElementById("ytBox").hidden = false; document.body.classList.add("has-yt");
@@ -508,10 +508,10 @@ window.onYouTubeIframeAPIReady = () => {
     events: {onReady: () => { ytReady = true; try { ytPlayer.setVolume(70); } catch(_) {} },
              onError: () => { ytFail = true; document.getElementById("ytBox").hidden = true; document.body.classList.remove("has-yt"); }}});
 };
-(() => { const t = document.createElement("script"); t.src = "https://www.youtube.com/iframe_api"; t.onerror = () => { ytFail = true; }; document.head.appendChild(t); })();
+if (YT_VIDEO) (() => { const t = document.createElement("script"); t.src = "https://www.youtube.com/iframe_api"; t.onerror = () => { ytFail = true; }; document.head.appendChild(t); })();
 function startSound(){
   if (ytPlayer && ytReady && !ytFail){ try { ytPlayer.playVideo(); return; } catch(_) {} }
-  if (ytFail || !window.YT) startMusic();
+  if (!YT_VIDEO || ytFail || !window.YT) startMusic();
 }
 document.addEventListener("pointerdown", startSound, {once:true});
 document.addEventListener("keydown", startSound, {once:true});
