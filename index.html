@@ -146,6 +146,13 @@ p{margin:0}
 .vip{font-family:var(--f-serif);font-style:italic;font-size:1.2rem;color:var(--ice);max-width:28ch;text-wrap:balance}
 .must{display:inline-block;padding:8px 14px;border-radius:999px;border:1px solid var(--gold);color:var(--gold);font-size:.78rem;letter-spacing:.18em;text-transform:uppercase}
 form{width:100%;display:grid;gap:12px;text-align:left}
+.ghost{background:transparent;animation:none;box-shadow:none;font-size:.86rem}
+.ghost::after{display:none}
+.review{position:fixed;inset:0;z-index:30;display:grid;place-items:center;background:rgba(6,18,46,.8);backdrop-filter:blur(6px);padding:16px max(16px,env(safe-area-inset-right,0px)) 16px max(16px,env(safe-area-inset-left,0px))}
+.review[hidden]{display:none!important}
+.review-card{width:min(400px,100%);box-sizing:border-box;background:linear-gradient(180deg,#143e87,#0b2252);border:1px solid var(--line);border-radius:20px;padding:24px 20px;display:grid;gap:14px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5);animation:reveal .5s ease both}
+#revList{list-style:none;margin:0;padding:0;text-align:left;display:grid;gap:6px}
+#revList li{padding:9px 12px;border-radius:10px;background:var(--glass);border:1px solid var(--line);font-size:.95rem;overflow-wrap:anywhere}
 .acomp{display:grid;gap:12px}
 .pair{display:grid;grid-template-columns:1fr 92px;gap:10px;align-items:end;animation:reveal .6s ease both}
 .pair label{min-width:0}.acomp:empty{display:none}
@@ -260,8 +267,12 @@ a.spell{text-decoration:none;display:inline-block;text-align:center}
     <p class="vip rv" style="--d:3">Isso é muito importante, para que seu lugar seja reservado.</p>
     <p class="blue rv" style="--d:4"><b>Cuidado com as cores azuis!</b><br>O azul é a minha cor nesta noite. Por favor, não vá de azul 💙</p>
     <form id="rsvp" class="rv" style="--d:5" novalidate>
-      <label for="nome">Seu nome
-        <input id="nome" name="nome" autocomplete="name" placeholder="Nome e sobrenome" required></label>
+      <div class="pair">
+        <label for="nome">Seu nome
+          <input id="nome" name="nome" autocomplete="name" placeholder="Nome e sobrenome" required></label>
+        <label for="idade">Idade
+          <input id="idade" name="idade" type="number" min="0" max="120" inputmode="numeric" placeholder="anos" required></label>
+      </div>
       <label for="qtd">Quantas pessoas vêm com você (contando você)
         <select id="qtd" name="qtd">
           <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option>
@@ -270,8 +281,17 @@ a.spell{text-decoration:none;display:inline-block;text-align:center}
       <label for="recado">Recado para a Mariana (opcional)
         <textarea id="recado" name="recado" placeholder="Deixe um carinho..."></textarea></label>
       <p class="err" id="err" role="alert"></p>
-      <a class="spell" id="confirmar" href="#" target="_blank" rel="noopener">Confirmar presença ✦</a>
+      <button class="spell" id="confirmar" type="button">Confirmar presença ✦</button>
+      <button class="spell ghost" type="button" data-next>Ver sugestão de presentes</button>
     </form>
+    <div class="review" id="review" hidden role="dialog" aria-modal="true" aria-labelledby="revTitle">
+      <div class="review-card">
+        <h3 id="revTitle" class="script" style="font-size:2.3rem;margin:0;line-height:1.1">Tem certeza que são esses dados?</h3>
+        <ul id="revList"></ul>
+        <a class="spell" id="revOk" href="#" target="_blank" rel="noopener">Sim, confirmar ✦</a>
+        <button class="mini" type="button" id="revBack">Corrigir</button>
+      </div>
+    </div>
     <div class="after rv" id="after" hidden>
       <h2 class="script" style="font-size:2.6rem">Obrigada! ♡</h2>
       <p class="note">Envie a mensagem que abriu no WhatsApp para garantir seu lugar.</p>
@@ -515,7 +535,7 @@ document.getElementById("copyPix").addEventListener("click", async e => {
 
 /* ===== confirmação pelo WhatsApp ===== */
 const btn = document.getElementById("confirmar"), nome = document.getElementById("nome"), qtd = document.getElementById("qtd"), recado = document.getElementById("recado"), err = document.getElementById("err");
-const acomp = document.getElementById("acomp");
+const acomp = document.getElementById("acomp"), idade = document.getElementById("idade");
 function companions(){ return [...acomp.querySelectorAll(".pair")].map(p => ({nome:p.querySelector(".an").value.trim(), idade:p.querySelector(".ai").value.trim()})); }
 function renderAcomp(){
   const old = companions(), n = +qtd.value - 1;
@@ -536,7 +556,7 @@ function renderAcomp(){
 qtd.addEventListener("change", renderAcomp);
 function waLink(){
   const n = nome.value.trim(), q = +qtd.value, ac = companions().filter(c => c.nome);
-  let msg = `✨ Confirmação de presença – 15 anos da Mariana ✨\n\nOlá! Aqui é ${n} e eu vou à festa!`;
+  let msg = `✨ Confirmação de presença – 15 anos da Mariana ✨\n\nOlá! Aqui é ${n} (${idade.value.trim()} anos) e eu vou à festa!`;
   msg += q > 1 ? `\nSeremos ${q} pessoas (contando comigo).` : `\nVou sozinho(a).`;
   if (ac.length) msg += "\n\nAcompanhantes:\n" + ac.map(c => "• " + c.nome + (c.idade ? ` (${c.idade} anos)` : "")).join("\n");
   if (recado.value.trim()) msg += `\n\nRecado para a Mariana: ${recado.value.trim()}`;
@@ -545,25 +565,42 @@ function waLink(){
 let salvo = "";
 function salvarNaLista(){
   if (!CONFIG.planilha) return;
-  const dados = {nome: nome.value.trim(), acompanhantes: companions().filter(c => c.nome), recado: recado.value.trim()};
+  const dados = {nome: nome.value.trim(), idade: idade.value.trim(), acompanhantes: companions().filter(c => c.nome), recado: recado.value.trim()};
   const chave = JSON.stringify(dados);
   if (chave === salvo) return;
   salvo = chave;
   try { fetch(CONFIG.planilha, {method: "POST", mode: "no-cors", keepalive: true, headers: {"Content-Type": "text/plain;charset=utf-8"}, body: chave}); } catch(_) {}
 }
-function sync(){ btn.href = nome.value.trim() ? waLink() : "#"; if (nome.value.trim()) err.textContent = ""; }
-[nome, qtd, recado].forEach(el => el.addEventListener("input", sync));
-btn.addEventListener("click", e => {
-  if (!nome.value.trim()){ e.preventDefault(); err.textContent = "Escreva seu nome para a Mariana saber quem vem."; nome.focus(); return; }
+function sync(){ if (nome.value.trim()) err.textContent = ""; }
+[nome, idade, qtd, recado].forEach(el => el.addEventListener("input", sync));
+const review = document.getElementById("review"), revList = document.getElementById("revList"), revOk = document.getElementById("revOk");
+function validar(){
+  if (!nome.value.trim()){ err.textContent = "Escreva seu nome para a Mariana saber quem vem."; nome.focus(); return false; }
+  if (!idade.value.trim()){ err.textContent = "Informe a sua idade."; idade.focus(); return false; }
   const vazio = [...acomp.querySelectorAll("input")].find(i => !i.value.trim());
-  if (vazio){ e.preventDefault(); err.textContent = vazio.classList.contains("ai") ? "Informe a idade de cada acompanhante." : "Escreva o nome de cada acompanhante."; vazio.focus(); return; }
-  btn.href = waLink();
+  if (vazio){ err.textContent = vazio.classList.contains("ai") ? "Informe a idade de cada acompanhante." : "Escreva o nome de cada acompanhante."; vazio.focus(); return false; }
+  err.textContent = ""; return true;
+}
+btn.addEventListener("click", () => {
+  if (!validar()) return;
+  revList.innerHTML = "";
+  const add = t => { const li = document.createElement("li"); li.textContent = t; revList.appendChild(li); };
+  add(`${nome.value.trim()}, ${idade.value.trim()} anos`);
+  companions().forEach(c => add(`${c.nome}, ${c.idade} anos (acompanhante)`));
+  if (recado.value.trim()) add(`Recado: ${recado.value.trim()}`);
+  revOk.href = waLink();
+  review.hidden = false;
+});
+document.getElementById("revBack").addEventListener("click", () => { review.hidden = true; });
+revOk.addEventListener("click", e => {
+  revOk.href = waLink();
   salvarNaLista();
-  if (!reduce) swirl(e.clientX, e.clientY);
-  burst(e.clientX, e.clientY, 120); chime();
+  review.hidden = true;
+  if (!reduce) swirl(e.clientX || W/2, e.clientY || H/2);
+  burst(e.clientX || W/2, e.clientY || H/2, 120); chime();
   setTimeout(() => {
     document.getElementById("rsvp").hidden = true;
-    const a = document.getElementById("after"); a.hidden = false;
+    document.getElementById("after").hidden = false;
   }, 400);
 });
 document.getElementById("restart").addEventListener("click", e => go(0, e.clientX, e.clientY));
