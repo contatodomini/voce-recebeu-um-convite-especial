@@ -46,6 +46,10 @@ body{
 
 .stage{position:relative;z-index:5;height:100%;display:grid;place-items:center;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.yt{position:fixed;z-index:12;left:50%;transform:translateX(-50%);bottom:calc(10px + env(safe-area-inset-bottom,0px));width:200px;height:200px;border-radius:18px;overflow:hidden;border:1px solid var(--line);box-shadow:0 10px 40px rgba(0,0,0,.55),0 0 24px rgba(191,227,255,.25);background:#000}
+.yt iframe{width:200px;height:200px;display:block;border:0}
+.yt-tag{position:absolute;left:0;right:0;top:0;padding:5px 8px;font:500 .7rem var(--f-sans);letter-spacing:.08em;color:#fff;background:linear-gradient(rgba(6,18,46,.85),rgba(6,18,46,0));pointer-events:none}
+body.has-yt .scene{padding-bottom:236px}
 .scene{grid-area:1/1;width:min(440px,100%);max-height:100%;overflow-y:auto;scrollbar-width:none;
   display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;padding-block:28px 64px}
 .scene::-webkit-scrollbar{display:none}
@@ -182,6 +186,7 @@ a.spell{text-decoration:none;display:inline-block;text-align:center}
 <canvas id="sky" aria-hidden="true"></canvas>
 <div id="flash" aria-hidden="true"></div>
 <canvas id="fx" aria-hidden="true"></canvas>
+<div class="yt" id="ytBox" hidden><div id="ytPlayer"></div><span class="yt-tag">♪ So This Is Love</span></div>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
@@ -493,8 +498,24 @@ function startMusic(){
     tick(); music.timer = setInterval(tick, 120);
   } catch(_) {}
 }
-document.addEventListener("pointerdown", startMusic, {once:true});
-document.addEventListener("keydown", startMusic, {once:true});
+/* música do filme pelo player do YouTube (o player fica visível, como o YouTube exige); sem YouTube, toca a caixinha */
+const YT_VIDEO = "84FhlPuXkPw";
+let ytPlayer = null, ytReady = false, ytFail = false;
+window.onYouTubeIframeAPIReady = () => {
+  document.getElementById("ytBox").hidden = false; document.body.classList.add("has-yt");
+  ytPlayer = new YT.Player("ytPlayer", {width: 200, height: 200, videoId: YT_VIDEO,
+    playerVars: {playsinline: 1, loop: 1, playlist: YT_VIDEO, controls: 1, rel: 0, modestbranding: 1},
+    events: {onReady: () => { ytReady = true; try { ytPlayer.setVolume(70); } catch(_) {} },
+             onError: () => { ytFail = true; document.getElementById("ytBox").hidden = true; document.body.classList.remove("has-yt"); }}});
+};
+(() => { const t = document.createElement("script"); t.src = "https://www.youtube.com/iframe_api"; t.onerror = () => { ytFail = true; }; document.head.appendChild(t); })();
+function startSound(){
+  if (ytPlayer && ytReady && !ytFail){ try { ytPlayer.playVideo(); return; } catch(_) {} }
+  if (ytFail || !window.YT) startMusic();
+}
+document.addEventListener("pointerdown", startSound, {once:true});
+document.addEventListener("keydown", startSound, {once:true});
+document.querySelector(".star-btn").addEventListener("click", () => { if (ytPlayer && ytReady && !ytFail) try { ytPlayer.playVideo(); } catch(_) {} });
 document.addEventListener("visibilitychange", () => { if (!ac) return; document.hidden ? ac.suspend() : ac.resume(); });
 
 /* ===== troca de cena com feitiço ===== */
