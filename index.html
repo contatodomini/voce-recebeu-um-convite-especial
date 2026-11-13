@@ -322,6 +322,7 @@ const CONFIG = {
   local: "Bola Brasil Eventos",
   endereco: "R. Duque de Caxias, 554 · José Pires de Godoy · Ibiporã/PR · 86200-238",
   mapa: "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent("Bola Brasil Eventos, R. Duque de Caxias, 554, Ibiporã - PR, 86200-238"),                       // link do Google Maps, se houver
+  planilha: "https://script.google.com/macros/s/AKfycbwQC_WcIsZdGXXys-_eMnSWRY-hxNAesVSjj7OZ4VhY_z8N1T7LZ9cMK39NNewisZMcfA/exec",                  // URL do app da Web do Google (lista de presença)
   whatsapp: "5543991451526",      // número que recebe as confirmações (DDI + DDD + número)
   whatsappVisivel: "(43) 99145-1526"
 };
@@ -541,6 +542,15 @@ function waLink(){
   if (recado.value.trim()) msg += `\n\nRecado para a Mariana: ${recado.value.trim()}`;
   return `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(msg)}`;
 }
+let salvo = "";
+function salvarNaLista(){
+  if (!CONFIG.planilha) return;
+  const dados = {nome: nome.value.trim(), acompanhantes: companions().filter(c => c.nome), recado: recado.value.trim()};
+  const chave = JSON.stringify(dados);
+  if (chave === salvo) return;
+  salvo = chave;
+  try { fetch(CONFIG.planilha, {method: "POST", mode: "no-cors", keepalive: true, headers: {"Content-Type": "text/plain;charset=utf-8"}, body: chave}); } catch(_) {}
+}
 function sync(){ btn.href = nome.value.trim() ? waLink() : "#"; if (nome.value.trim()) err.textContent = ""; }
 [nome, qtd, recado].forEach(el => el.addEventListener("input", sync));
 btn.addEventListener("click", e => {
@@ -548,6 +558,7 @@ btn.addEventListener("click", e => {
   const vazio = [...acomp.querySelectorAll("input")].find(i => !i.value.trim());
   if (vazio){ e.preventDefault(); err.textContent = vazio.classList.contains("ai") ? "Informe a idade de cada acompanhante." : "Escreva o nome de cada acompanhante."; vazio.focus(); return; }
   btn.href = waLink();
+  salvarNaLista();
   if (!reduce) swirl(e.clientX, e.clientY);
   burst(e.clientX, e.clientY, 120); chime();
   setTimeout(() => {
