@@ -153,7 +153,7 @@ form{width:100%;display:grid;gap:12px;text-align:left}
 .ghost{background:transparent;animation:none;box-shadow:none;font-size:.86rem}
 .ghost::after{display:none}
 .review{position:fixed;inset:0;z-index:30;display:grid;place-items:center;background:rgba(6,18,46,.8);backdrop-filter:blur(6px);padding:16px max(16px,env(safe-area-inset-right,0px)) 16px max(16px,env(safe-area-inset-left,0px))}
-.review[hidden]{display:none!important}
+.review[hidden],.spell[hidden]{display:none!important}
 .review-card{width:min(400px,100%);box-sizing:border-box;background:linear-gradient(180deg,#143e87,#0b2252);border:1px solid var(--line);border-radius:20px;padding:24px 20px;display:grid;gap:14px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5);animation:reveal .5s ease both}
 #revList{list-style:none;margin:0;padding:0;text-align:left;display:grid;gap:6px}
 #revList li{padding:9px 12px;border-radius:10px;background:var(--glass);border:1px solid var(--line);font-size:.95rem;overflow-wrap:anywhere}
@@ -299,8 +299,9 @@ a.spell{text-decoration:none;display:inline-block;text-align:center}
     </div>
     <div class="after rv" id="after" hidden>
       <h2 class="script" style="font-size:2.6rem">Obrigada! ♡</h2>
-      <p class="note">Envie a mensagem que abriu no WhatsApp para garantir seu lugar.</p>
-      <button class="spell" type="button" data-next style="margin-top:10px">Sugestão de presentes ✦</button>
+      <p class="note" id="afterNote">Envie a mensagem que abriu no WhatsApp. Falta só mais um toque: mande também para a Luciana.</p>
+      <a class="spell" id="luOk" href="#" target="_blank" rel="noopener" style="margin-top:10px">Enviar também para a Luciana ✦</a>
+      <button class="spell" type="button" id="afterGifts" data-next style="margin-top:10px" hidden>Sugestão de presentes ✦</button>
     </div>
   </section>
 
@@ -349,7 +350,8 @@ const CONFIG = {
   mapa: "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent("Bola Brasil Eventos, R. Duque de Caxias, 554, Ibiporã - PR, 86200-238"),                       // link do Google Maps, se houver
   planilha: "https://script.google.com/macros/s/AKfycbwQC_WcIsZdGXXys-_eMnSWRY-hxNAesVSjj7OZ4VhY_z8N1T7LZ9cMK39NNewisZMcfA/exec",                  // URL do app da Web do Google (lista de presença)
   whatsapp: "5543991451526",      // número que recebe as confirmações (DDI + DDD + número)
-  whatsappVisivel: "(43) 99145-1526"
+  whatsappVisivel: "(43) 99145-1526",
+  whatsapp2: "5543991451523"       // Luciana: recebe a mesma confirmação
 };
 
 const reduce = false; /* o convite é todo animado: a magia roda sempre */
@@ -582,13 +584,13 @@ function renderAcomp(){
   sync();
 }
 qtd.addEventListener("change", renderAcomp);
-function waLink(){
+function waLink(num){
   const n = nome.value.trim(), q = +qtd.value, ac = companions().filter(c => c.nome);
   let msg = `✨ Confirmação de presença – 15 anos da Mariana ✨\n\nOlá! Aqui é ${n} (${idade.value.trim()} anos) e eu vou à festa!`;
   msg += q > 1 ? `\nSeremos ${q} pessoas (contando comigo).` : `\nVou sozinho(a).`;
   if (ac.length) msg += "\n\nAcompanhantes:\n" + ac.map(c => "• " + c.nome + (c.idade ? ` (${c.idade} anos)` : "")).join("\n");
   if (recado.value.trim()) msg += `\n\nRecado para a Mariana: ${recado.value.trim()}`;
-  return `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(msg)}`;
+  return `https://wa.me/${num || CONFIG.whatsapp}?text=${encodeURIComponent(msg)}`;
 }
 let salvo = "";
 function salvarNaLista(){
@@ -617,6 +619,7 @@ btn.addEventListener("click", () => {
   companions().forEach(c => add(`${c.nome}, ${c.idade} anos (acompanhante)`));
   if (recado.value.trim()) add(`Recado: ${recado.value.trim()}`);
   revOk.href = waLink();
+  luOk.href = waLink(CONFIG.whatsapp2);
   review.hidden = false;
 });
 document.getElementById("revBack").addEventListener("click", () => { review.hidden = true; });
@@ -629,6 +632,16 @@ revOk.addEventListener("click", e => {
   setTimeout(() => {
     document.getElementById("rsvp").hidden = true;
     document.getElementById("after").hidden = false;
+  }, 400);
+});
+const luOk = document.getElementById("luOk");
+luOk.addEventListener("click", e => {
+  luOk.href = waLink(CONFIG.whatsapp2);
+  burst(e.clientX || W/2, e.clientY || H/2, 90); chime();
+  setTimeout(() => {
+    luOk.hidden = true;
+    document.getElementById("afterNote").textContent = "Pronto! Sua presença está confirmada. ♡";
+    document.getElementById("afterGifts").hidden = false;
   }, 400);
 });
 document.getElementById("restart").addEventListener("click", e => go(0, e.clientX, e.clientY));
