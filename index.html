@@ -509,13 +509,20 @@ window.onYouTubeIframeAPIReady = () => {
              onError: () => { ytFail = true; document.getElementById("ytBox").hidden = true; document.body.classList.remove("has-yt"); }}});
 };
 if (YT_VIDEO) (() => { const t = document.createElement("script"); t.src = "https://www.youtube.com/iframe_api"; t.onerror = () => { ytFail = true; }; document.head.appendChild(t); })();
+/* Valsa das Flores (Tchaikovsky) — U.S. Army Band, domínio público (Wikimedia Commons) */
+const bg = new Audio("valsa.mp3"); bg.loop = true; bg.preload = "auto";
+let bgOn = false;
 function startSound(){
-  if (ytPlayer && ytReady && !ytFail){ try { ytPlayer.playVideo(); return; } catch(_) {} }
-  if (!YT_VIDEO || ytFail || !window.YT) startMusic();
+  if (bgOn) return; bgOn = true;
+  bg.volume = 0;
+  bg.play().then(() => {
+    let v = 0; const f = setInterval(() => { v = Math.min(.75, v + .05); try { bg.volume = v; } catch(_) {} if (v >= .75) clearInterval(f); }, 150);
+  }).catch(() => { bgOn = false; startMusic(); });
 }
+document.addEventListener("visibilitychange", () => { if (!bgOn) return; document.hidden ? bg.pause() : bg.play().catch(() => {}); });
 document.addEventListener("pointerdown", startSound, {once:true});
 document.addEventListener("keydown", startSound, {once:true});
-document.querySelector(".star-btn").addEventListener("click", () => { if (ytPlayer && ytReady && !ytFail) try { ytPlayer.playVideo(); } catch(_) {} });
+document.querySelector(".star-btn").addEventListener("click", startSound);
 document.addEventListener("visibilitychange", () => { if (!ac) return; document.hidden ? ac.suspend() : ac.resume(); });
 
 /* ===== troca de cena com feitiço ===== */
