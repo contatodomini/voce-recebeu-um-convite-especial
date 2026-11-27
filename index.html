@@ -148,7 +148,8 @@ p{margin:0}
 .blue{margin:2px 0;padding:12px 16px;border:1px solid var(--gown);border-radius:14px;background:rgba(95,168,232,.14);font-size:.95rem;line-height:1.5;color:var(--frost);max-width:32ch}
 .blue b{color:var(--ice);font-weight:500;letter-spacing:.04em}
 .vip{font-family:var(--f-serif);font-style:italic;font-size:1.2rem;color:var(--ice);max-width:28ch;text-wrap:balance}
-.must{display:inline-block;padding:8px 14px;border-radius:999px;border:1px solid var(--gold);color:var(--gold);font-size:.78rem;letter-spacing:.18em;text-transform:uppercase}
+.must{display:inline-block;padding:10px 20px;border-radius:999px;border:1px solid var(--gold);background:linear-gradient(180deg,rgba(243,217,139,.95),rgba(224,182,74,.95));color:#2a1c04;font-weight:600;font-size:.86rem;letter-spacing:.14em;text-transform:uppercase;box-shadow:0 0 0 0 rgba(243,217,139,.6),0 6px 22px rgba(0,0,0,.35);animation:mustGlow 2.2s ease-in-out infinite}
+@keyframes mustGlow{50%{box-shadow:0 0 0 9px rgba(243,217,139,0),0 6px 22px rgba(0,0,0,.35)}}
 form{width:100%;display:grid;gap:12px;text-align:left}
 .ghost{background:transparent;animation:none;box-shadow:none;font-size:.86rem}
 .ghost::after{display:none}
@@ -267,8 +268,8 @@ a.spell{text-decoration:none;display:inline-block;text-align:center}
   <section class="scene" data-step="4" hidden aria-label="Confirmação de presença">
     <p class="eyebrow rv" style="--d:0">Antes da meia-noite</p>
     <h2 class="script rv" style="--d:1;font-size:3.2rem">Confirme sua presença</h2>
-    <p class="lead rv" style="--d:2;font-size:1.35rem">Até o dia <em>30 de novembro</em></p>
-    <span class="must rv" style="--d:3">É imprescindível a confirmação</span>
+    <p class="lead rv" style="--d:2;font-size:1.35rem">Até o dia <em>10 de dezembro</em></p>
+    <span class="must rv" style="--d:3">⚠ É imprescindível a confirmação</span>
     <p class="vip rv" style="--d:3">Isso é muito importante, para que seu lugar seja reservado.</p>
     <p class="blue rv" style="--d:4"><b>Cuidado com as cores azuis!</b><br>O azul é a minha cor nesta noite. Por favor, não vá de azul 💙</p>
     <form id="rsvp" class="rv" style="--d:5" novalidate>
